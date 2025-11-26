@@ -46,25 +46,35 @@ The blindness guarantee comes from a two-transaction process:
 
 ## Verifying the Contract
 
-### Verify Deployed Bytecode Matches Source
+### Quick Verification (Recommended)
 
-You can verify the deployed program matches this source code by comparing hashes:
+Verify the on-chain program matches our published binary:
 
 ```bash
 # 1. Download the deployed program from Solana
 solana program dump AgdxtGStJsyCZAZvZChtnTtaK774e3Yf2QWdq8gSfLuc deployed.so
 sha256sum deployed.so
 
-# 2. Clone and build from source
-git clone https://github.com/Social-RV/solana-contracts
-cd solana-contracts/solana-program
-cargo build-sbf
-sha256sum target/deploy/remote_viewing_verifier.so
-
-# 3. Compare the two hashes - they should match
+# 2. Compare with our published hash
+# Expected: 887752a7a9b7f7e06407f1a4a9d3ecb66593ef8b671deefef642b0b8495f2257
 ```
 
-No wallet or SOL required - just Rust and the Solana CLI.
+Or clone and compare directly:
+```bash
+git clone https://github.com/Social-RV/solana-contracts
+sha256sum solana-contracts/deployed/remote_viewing_verifier.so
+# Should match the hash from step 1
+```
+
+### Full Source Verification
+
+The `deployed/remote_viewing_verifier.so` binary was built from the source code in `solana-program/`. You can:
+
+1. **Read the source** - `solana-program/src/lib.rs` contains all the logic
+2. **Audit the code** - It's ~650 lines of Rust, fully commented
+3. **Rebuild yourself** - Requires matching the exact Solana toolchain version (Docker-based builds recommended for reproducibility)
+
+No wallet or SOL required for verification.
 
 ### View on Solana Explorer
 
