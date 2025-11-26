@@ -48,19 +48,23 @@ The blindness guarantee comes from a two-transaction process:
 
 ### Verify Deployed Bytecode Matches Source
 
-Use [solana-verify](https://github.com/Ellipsis-Labs/solana-verifiable-build) to confirm the deployed program matches this source code:
+You can verify the deployed program matches this source code by comparing hashes:
 
 ```bash
-# Install solana-verify
-cargo install solana-verify
+# 1. Download the deployed program from Solana
+solana program dump AgdxtGStJsyCZAZvZChtnTtaK774e3Yf2QWdq8gSfLuc deployed.so
+sha256sum deployed.so
 
-# Verify the program
-solana-verify verify-from-repo \
-  --program-id AgdxtGStJsyCZAZvZChtnTtaK774e3Yf2QWdq8gSfLuc \
-  --remote https://github.com/Social-RV/solana-contracts \
-  --library-name remote_viewing \
-  --mount-path solana-program
+# 2. Clone and build from source
+git clone https://github.com/Social-RV/solana-contracts
+cd solana-contracts/solana-program
+cargo build-sbf
+sha256sum target/deploy/remote_viewing_verifier.so
+
+# 3. Compare the two hashes - they should match
 ```
+
+No wallet or SOL required - just Rust and the Solana CLI.
 
 ### View on Solana Explorer
 
