@@ -1,6 +1,6 @@
 # Social RV - Solana Contracts
 
-This repository contains the open-source Solana smart contracts and SDK for [Social RV](https://socialrv.com), a platform for provably blind remote viewing sessions.
+This repository contains the open-source Solana smart contracts and SDK for [Social RV](https://social-rv.com), a platform for provably blind remote viewing sessions.
 
 **[Verify Sessions →](https://social-rv.com/verify)** — Interactive UI to explore how the blockchain verification works and verify any session.
 
