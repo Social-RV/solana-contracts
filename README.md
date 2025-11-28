@@ -115,7 +115,3 @@ The `solana-transaction-decoders.ts` file provides functions to decode on-chain 
 ## License
 
 MIT License - See LICENSE file for details.
-
-## Security
-
-If you discover a security vulnerability, please email security@socialrv.com.
