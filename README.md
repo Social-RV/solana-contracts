@@ -2,6 +2,8 @@
 
 This repository contains the open-source Solana smart contracts and SDK for [Social RV](https://socialrv.com), a platform for provably blind remote viewing sessions.
 
+**[Verify Sessions →](https://social-rv.com/verify)** — Interactive UI to explore how the blockchain verification works and verify any session.
+
 ## Overview
 
 These contracts enable cryptographically verifiable blind target assignment for remote viewing sessions. The key guarantee: **nobody can know what target will be assigned until after a session is submitted**.
@@ -23,8 +25,8 @@ These contracts enable cryptographically verifiable blind target assignment for 
 
 ## Deployed Program
 
-| Network | Program ID |
-|---------|-----------|
+| Network | Program ID                                     |
+| ------- | ---------------------------------------------- |
 | Mainnet | `AgdxtGStJsyCZAZvZChtnTtaK774e3Yf2QWdq8gSfLuc` |
 
 ## How It Works
@@ -44,41 +46,29 @@ The blindness guarantee comes from a two-transaction process:
 - **Immutable Pools**: Target pools are finalized before sessions can be submitted, preventing manipulation.
 - **On-Chain Verification**: All data is stored on Solana and can be independently verified.
 
-## Verifying the Contract
+### Pool Creation Flow
 
-### Quick Verification (Recommended)
+Before sessions can be submitted, a target pool must be created and locked. This is a three-step process:
 
-Verify the on-chain program matches our published binary:
+1. **CreateTargetPool** - Creates a new pool with an initial set of target hashes (can be empty).
 
-```bash
-# 1. Download the deployed program from Solana
-solana program dump AgdxtGStJsyCZAZvZChtnTtaK774e3Yf2QWdq8gSfLuc deployed.so
-sha256sum deployed.so
+2. **AppendTargetsToPool** - Uploads additional target hashes to the pool. This can be called multiple times to batch-upload targets. Only the original pool creator can append targets.
 
-# 2. Compare with our published hash
-# Expected: 887752a7a9b7f7e06407f1a4a9d3ecb66593ef8b671deefef642b0b8495f2257
+3. **FinalizePool** - Locks the pool, preventing any further target additions. Once finalized, the pool is immutable and sessions can be submitted against it.
+
+```
+┌──────────────────┐     ┌─────────────────────┐     ┌──────────────┐
+│ CreateTargetPool │ ──▶ │ AppendTargetsToPool │ ──▶ │ FinalizePool │
+│   (initialize)   │     │   (repeat as needed) │     │    (lock)    │
+└──────────────────┘     └─────────────────────┘     └──────────────┘
 ```
 
-Or clone and compare directly:
-```bash
-git clone https://github.com/Social-RV/solana-contracts
-sha256sum solana-contracts/deployed/remote_viewing_verifier.so
-# Should match the hash from step 1
-```
+**Why this flow?**
 
-### Full Source Verification
-
-The `deployed/remote_viewing_verifier.so` binary was built from the source code in `solana-program/`. You can:
-
-1. **Read the source** - `solana-program/src/lib.rs` contains all the logic
-2. **Audit the code** - It's ~650 lines of Rust, fully commented
-3. **Rebuild yourself** - Requires matching the exact Solana toolchain version (Docker-based builds recommended for reproducibility)
-
-No wallet or SOL required for verification.
-
-### View on Solana Explorer
-
-- [View Program on Mainnet](https://explorer.solana.com/address/AgdxtGStJsyCZAZvZChtnTtaK774e3Yf2QWdq8gSfLuc)
+- Allows batch uploading of large target sets across multiple transactions
+- The finalization step ensures all targets are committed before any sessions begin
+- Only the pool creator can modify or finalize the pool
+- Once finalized, the pool cannot be altered, guaranteeing fair target selection
 
 ## Building
 
@@ -99,13 +89,13 @@ cargo build-sbf
 The TypeScript SDK provides methods to interact with the deployed program:
 
 ```typescript
-import { RemoteViewingSDK } from './sdk/remote-viewing-sdk';
+import { RemoteViewingSDK } from "./sdk/remote-viewing-sdk";
 
 const sdk = new RemoteViewingSDK(
-  'https://api.mainnet-beta.solana.com',
-  'AgdxtGStJsyCZAZvZChtnTtaK774e3Yf2QWdq8gSfLuc',
+  "https://api.mainnet-beta.solana.com",
+  "AgdxtGStJsyCZAZvZChtnTtaK774e3Yf2QWdq8gSfLuc",
   privateKey,
-  'mainnet'
+  "mainnet"
 );
 
 // Verify a session's integrity
@@ -118,7 +108,7 @@ console.log(result.valid); // true if all checks pass
 The `solana-transaction-decoders.ts` file provides functions to decode on-chain data:
 
 - `decodePoolAccount(base64)` - Decode target pool account data
-- `decodeSessionAccount(base64)` - Decode session account data  
+- `decodeSessionAccount(base64)` - Decode session account data
 - `decodeSubmitSessionInstruction(hex)` - Decode submit instruction
 - `decodeFinalizeSessionInstruction(hex)` - Decode finalize instruction
 
@@ -129,4 +119,3 @@ MIT License - See LICENSE file for details.
 ## Security
 
 If you discover a security vulnerability, please email security@socialrv.com.
-
