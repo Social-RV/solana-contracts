@@ -37,6 +37,47 @@ function uint8ArrayToUtf8(buffer: Uint8Array): string {
   return new TextDecoder().decode(buffer);
 }
 
+// Base58 encoding alphabet (Bitcoin/Solana alphabet)
+const BASE58_ALPHABET =
+  '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+
+function uint8ArrayToBase58(buffer: Uint8Array): string {
+  // Handle empty input
+  if (buffer.length === 0) return '';
+
+  // Count leading zeros
+  let leadingZeros = 0;
+  for (let i = 0; i < buffer.length && buffer[i] === 0; i++) {
+    leadingZeros++;
+  }
+
+  // Convert to base58
+  const digits = [0];
+  for (let i = leadingZeros; i < buffer.length; i++) {
+    let carry = buffer[i];
+    for (let j = 0; j < digits.length; j++) {
+      carry += digits[j] << 8;
+      digits[j] = carry % 58;
+      carry = (carry / 58) | 0;
+    }
+    while (carry > 0) {
+      digits.push(carry % 58);
+      carry = (carry / 58) | 0;
+    }
+  }
+
+  // Convert to base58 string
+  let result = '';
+  for (let i = 0; i < leadingZeros; i++) {
+    result += BASE58_ALPHABET[0];
+  }
+  for (let i = digits.length - 1; i >= 0; i--) {
+    result += BASE58_ALPHABET[digits[i]];
+  }
+
+  return result;
+}
+
 // Instruction decoder functions
 export function decodeCreateTargetPoolInstruction(hex: string): {
   instruction: 0;
@@ -295,11 +336,12 @@ export function decodeSessionAccount(base64Data: string): {
     // Read submission_slot (u64 - 8 bytes)
     const submissionSlotLow = readUInt32LE(data, offset);
     const submissionSlotHigh = readUInt32LE(data, offset + 4);
-    const submission_slot = submissionSlotLow + submissionSlotHigh * 0x100000000;
+    const submission_slot =
+      submissionSlotLow + submissionSlotHigh * 0x100000000;
     offset += 8;
 
-    // Read submission_blockhash (32 bytes)
-    const submission_blockhash = uint8ArrayToHex(
+    // Read submission_blockhash (32 bytes) - convert to base58 format
+    const submission_blockhash = uint8ArrayToBase58(
       data.subarray(offset, offset + 32),
     );
     offset += 32;
